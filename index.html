@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Пармаркет — тренажёр табаков</title>
+  <link rel="icon" type="image/webp" href="logo.webp">
+  <style>
+    :root {
+      --bg0:#050a14;
+      --bg1:#071226;
+      --card: rgba(13, 24, 44, .62);
+      --card2: rgba(10, 18, 34, .58);
+      --stroke: rgba(180, 210, 255, .14);
+      --stroke2: rgba(180, 210, 255, .22);
+      --text: rgba(235,245,255,.92);
+      --muted: rgba(210,225,255,.72);
+      --brand:#3c86ff;
+      --ok:#34d399;
+      --bad:#fb7185;
+      --shadow: 0 18px 55px rgba(0,0,0,.45);
+      --r: 22px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body.tip-open{ overflow:hidden; touch-action:none; }
+
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(60,134,255,.22), transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, rgba(80,180,255,.14), transparent 55%),
+        radial-gradient(900px 700px at 70% 95%, rgba(60,134,255,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+      padding: 24px 16px 34px;
+    }
+    /* subtle animated background (non-distracting) */
+    
+    /* Animated background blobs (subtle, but noticeable) */
+    .bg{
+      position:fixed;
+      inset:0;
+      overflow:hidden;
+      z-index:-1;
+      pointer-events:none;
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(30,110,255,.22), transparent 60%),
+        radial-gradient(1000px 900px at 80% 90%, rgba(0,210,255,.12), transparent 62%);
+    }
+    .blob{
+      position:absolute;
+      width:60vmax;
+      height:60vmax;
+      border-radius:999px;
+      --x1:-10vw; --y1:-8vh; --x2:22vw; --y2:14vh;
+      background: radial-gradient(circle at 30% 30%, rgba(80,170,255,.65), rgba(10,70,255,0) 62%);
+      opacity:.22;
+      filter: blur(44px);
+      mix-blend-mode: screen;
+      transform: translate3d(0,0,0);
+      animation: blobMove 12s ease-in-out infinite alternate, blobHue 14s linear infinite;
+      will-change: transform, filter;
+    }
+    .blob.b1{ top:-22vmax; left:-18vmax; }
+    .blob.b2{
+      top: 6vh; right:-22vmax;
+      width:48vmax; height:48vmax; opacity:.18;
+      --x1: 12vw; --y1: -6vh; --x2: -18vw; --y2: 10vh;
+      background: radial-gradient(circle at 40% 35%, rgba(20,210,255,.55), rgba(0,120,255,0) 64%);
+      animation-duration: 12s, 18s;
+      animation-delay: -4s, -2s;
+    }
+    .blob.b3{
+      bottom:-26vmax; left: 18vw;
+      width:52vmax; height:52vmax; opacity:.20;
+      --x1: -12vw; --y1: 10vh; --x2: 16vw; --y2: -12vh;
+      background: radial-gradient(circle at 35% 30%, rgba(140,120,255,.55), rgba(20,70,255,0) 64%);
+      animation-duration: 12s, 22s;
+      animation-delay: -8s, -6s;
+    }
+    .blob.b4{
+      bottom: 10vh; right: 8vw;
+      width:40vmax; height:40vmax; opacity:.16;
+      --x1: 10vw; --y1: 8vh; --x2: -14vw; --y2: -10vh;
+      background: radial-gradient(circle at 30% 30%, rgba(0,160,255,.50), rgba(0,70,255,0) 65%);
+      animation-duration: 12s, 16s;
+      animation-delay: -2s, -10s;
+    }
+    .blob.b5{
+      top: 42vh; left: -20vmax;
+      width:34vmax; height:34vmax; opacity:.14;
+      --x1: -6vw; --y1: 12vh; --x2: 22vw; --y2: -8vh;
+      background: radial-gradient(circle at 30% 30%, rgba(60,120,255,.55), rgba(0,70,255,0) 66%);
+      animation-duration: 12s, 20s;
+      animation-delay: -12s, -14s;
+    }
+
+    @keyframes blobMove{
+      0%{ transform: translate3d(var(--x1), var(--y1), 0) scale(1); }
+      100%{ transform: translate3d(var(--x2), var(--y2), 0) scale(1.08); }
+    }
+    @keyframes blobHue{
+      0%{ filter: blur(44px) hue-rotate(0deg); }
+      100%{ filter: blur(44px) hue-rotate(65deg); }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .blob{ animation: none !important; }
+    }
+
+
+
+    .wrap{max-width:1060px;margin:0 auto}
+    .header{
+      display:flex;align-items:center;gap:14px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--stroke);
+      border-radius: var(--r);
+      padding: 18px 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background: rgba(60,134,255,.12);
+      border:1px solid rgba(60,134,255,.35);
+      display:grid;place-items:center;
+      overflow:hidden;
+      flex: 0 0 auto;
+    }
+    /* keep the logo readable on mobile: fill the box, but never crop */
+    .logo img{
+      width:100%;height:100%;
+      padding:7px;
+      object-fit:contain;
+      filter: drop-shadow(0 8px 18px rgba(60,134,255,.25));
+    }
+    h1{font-size:24px;margin:0;letter-spacing:.2px}
+    .sub{margin-top:4px;color:var(--muted);font-size:14px;line-height:1.35}
+    .card{
+      margin-top:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--stroke);
+      border-radius: var(--r);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+    .pill{
+      display:inline-flex;align-items:center;gap:10px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.12);
+      user-select:none;
+    }
+    .pill input{accent-color: var(--brand)}
+    .pill span{font-size:13px;color:var(--text)}
+    .grid{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns: 300px 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 860px){
+      .grid{grid-template-columns:1fr;}
+      /* Mobile: static background (no blob animation) for better performance and less banding */
+      .blob{
+        animation: none !important;
+        mix-blend-mode: normal;
+        filter: blur(32px);
+        opacity: .18;
+      }
+    }
+    .imgBox{
+      border-radius: 18px;
+      border: 1px dashed rgba(180,210,255,.18);
+      padding: 14px;
+      background: rgba(0,0,0,.10);
+      min-height: 320px;
+    }
+    .imgFrame{
+      border-radius: 16px;
+      border: 1px solid rgba(180,210,255,.16);
+      background: rgba(255,255,255,.02);
+      height: 290px;
+      display:grid;place-items:center;
+      overflow:hidden;
+      position:relative;
+    }
+    .imgFrame img{max-width:100%;max-height:100%;object-fit:contain;}
+    .imgFrame .fallback{
+      position:absolute; inset:0;
+      display:none;
+      place-items:center;
+      color: rgba(210,225,255,.65);
+      font-size:13px;
+      padding:14px;
+      text-align:center;
+    }
+    .imgFrame.is-fallback .fallback{display:grid}
+    .main{
+      border-radius: 18px;
+      border: 1px dashed rgba(180,210,255,.18);
+      padding: 14px;
+      background: rgba(0,0,0,.10);
+      min-height: 320px;
+      position:relative;
+    }
+    .topline{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .brandName{font-size:22px;font-weight:700;margin:0;letter-spacing:.2px}
+    .counter{
+      border-radius: 999px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.12);
+      padding: 8px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space:nowrap;
+    }
+    .hint{margin:8px 0 10px;color:var(--muted);font-size:13px}
+    .fields{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 14px;
+    }
+    @media (max-width: 640px){
+      .fields{grid-template-columns:1fr}
+    }
+    label{display:block;font-size:13px;color: rgba(210,225,255,.78);margin-bottom:7px}
+    select{
+      width:100%;
+      border-radius: 12px;
+      border: 1px solid rgba(180,210,255,.18);
+      background: rgba(6, 14, 28, .65);
+      color: var(--text);
+      padding: 12px 12px;
+      outline:none;
+    }
+    select.is-ok{ box-shadow: 0 0 0 2px rgba(46,204,113,.28); border-color: rgba(46,204,113,.55); }
+    select.is-bad{ box-shadow: 0 0 0 2px rgba(255,77,109,.20); border-color: rgba(255,77,109,.55); }
+
+    select:focus{border-color: rgba(60,134,255,.55); box-shadow: 0 0 0 3px rgba(60,134,255,.16)}
+    .status{
+      margin-top:6px;
+      font-size:12px;
+      color: rgba(210,225,255,.72);
+      min-height: 16px;
+    }
+    .status b{color: var(--text)}
+    .ok{color: var(--ok)}
+    .bad{color: var(--bad)}
+    .actions{display:flex;gap:12px;align-items:center;margin-top:14px;flex-wrap:wrap}
+    .btn{
+      border-radius: 14px;
+      border:1px solid rgba(180,210,255,.18);
+      background: rgba(60,134,255,.12);
+      color: var(--text);
+      padding: 11px 16px;
+      font-weight: 700;
+      cursor:pointer;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+    }
+    .btn.secondary{background: rgba(0,0,0,.18);}
+    .btn:disabled{opacity:.45; cursor:not-allowed}
+    .stats{margin-left:auto; display:flex; gap:10px; flex-wrap:wrap}
+    .chip{
+      border-radius: 999px;
+      border:1px solid var(--stroke);
+      background: rgba(0,0,0,.12);
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .chip b{color: var(--text)}
+    .foot{margin-top:10px;color:rgba(210,225,255,.6);font-size:12px}
+    .errorBox{
+      display:none;
+      margin-top:12px;
+      border-radius: 14px;
+      border:1px solid rgba(251,113,133,.35);
+      background: rgba(251,113,133,.10);
+      padding: 10px 12px;
+      color: rgba(255,225,232,.95);
+      font-size: 13px;
+    }
+    .errorBox code{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px}
+    /* Tooltip */
+    .tooltip{
+      position:absolute;
+      left: 14px;
+      top: 14px;
+      max-width: calc(100% - 28px);
+      max-height: 240px;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(180,210,255,.20);
+      background: rgba(2, 10, 22, .92);
+      box-shadow: 0 22px 60px rgba(0,0,0,.45);
+      opacity:0;
+      transform: translateY(8px);
+      transition: opacity .12s ease, transform .12s ease;
+      pointer-events:none;
+    }
+    .tooltip.show{opacity:1; transform: translateY(0); pointer-events:auto}
+    .tooltipTitle{font-weight:800; margin:0 0 6px; font-size:13px}
+    .tooltipText{white-space:pre-wrap; line-height:1.35; color: rgba(235,245,255,.88); font-size:13px}
+  
+
+    /* --- Mobile layout tweaks (do not affect desktop) --- */
+    @media (max-width: 640px){
+      body{
+        padding: 18px 12px 26px;
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+      }
+      .header{
+        padding: 14px 14px;
+        gap: 12px;
+        padding-left: max(14px, env(safe-area-inset-left));
+        padding-right: max(14px, env(safe-area-inset-right));
+      }
+      /* larger logo on phones so it stays readable */
+      .logo{ width:50px; height:50px; border-radius:16px; }
+      .logo img{ padding:9px; }
+      h1{ font-size:20px; }
+      .sub{ font-size:13px; }
+
+      .card{ padding: 14px; }
+      .pill{ padding: 10px 12px; }
+      .pill span{ font-size:14px; }
+
+      .imgBox{ min-height: 0; }
+      /* Square frame, no cropping */
+      .imgFrame{
+        height: auto;
+        aspect-ratio: 1 / 1;
+        width: 100%;
+      }
+      .imgFrame img{ width: 100%; height: 100%; object-fit: contain; }
+
+      select{ font-size:16px; } /* prevent iOS zoom */
+
+      .tooltip{
+        left: 12px;
+        right: 12px;
+        max-width: none;
+        max-height: 52vh;
+      }
+    }
+
+    /* Landscape phones: try to fit on one screen */
+    @media (max-width: 900px) and (orientation: landscape){
+      body{
+        padding: 12px 10px 18px;
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+      }
+      .header{ padding: 12px 12px; }
+      .logo{ width:50px; height:50px; border-radius:16px; }
+      .logo img{ padding:9px; }
+      .card{ padding: 12px; }
+      /* In landscape, avoid stretching the left (photo) column to match the right (form) height.
+         This keeps the dashed border snug around the image frame on iOS/Telegram. */
+      .grid{ grid-template-columns: 300px 1fr; gap: 12px; align-items: start; }
+      .imgBox{ min-height: 0; height: fit-content; }
+      .imgFrame{
+        height: auto;
+        aspect-ratio: 1 / 1;
+        max-height: 56vh;
+      }
+      .brandName{ font-size:20px; }
+      .fields{ grid-template-columns: 1fr 1fr; gap: 10px 10px; }
+      .hint{ margin:6px 0 8px; }
+      .tooltip{ max-height: 60vh; }
+      .tooltipTitle{ font-size:15px; }
+      .tooltipText{ font-size:15px; }
+    }
+</style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
+    <span class="blob b4"></span>
+    <span class="blob b5"></span>
+  </div>
+
+  <div class="wrap">
+    <div class="header">
+      <div class="logo"><img src="logo.webp" alt="Пармаркет"></div>
+      <div>
+        <h1>Тренажёр табаков</h1>
+        <div class="sub">Выбери группы для случайного бренда. Пустые значения считаются «—». «Следующий» можно нажимать всегда — серия при этом сбрасывается.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" id="groupsRow">
+        <div style="color:var(--muted);font-size:13px;margin-right:4px;">Группы:</div>
+      </div>
+
+      <div class="errorBox" id="errBox"></div>
+
+      <div class="grid">
+        <div class="imgBox">
+          <div class="imgFrame" id="imgFrame">
+            <img id="brandImg" alt="brand">
+            <div class="fallback">Картинка не найдена.<br>Проверь папку <b>img/</b> и имя файла = названию бренда.</div>
+            <div class="tooltip" id="tooltip">
+              <div class="tooltipTitle" id="tipTitle">Описание</div>
+              <div class="tooltipText" id="tipText"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="main">
+          <div class="topline">
+            <div>
+              <p class="brandName" id="brandName">—</p>
+              <div class="hint">Наведи на фото, чтобы увидеть описание</div>
+            </div>
+            <div class="counter" id="posCounter">0 / 0</div>
+          </div>
+
+          <div class="fields">
+            <div>
+              <label>Крепость</label>
+              <select id="selStrength"></select>
+              <div class="status" id="stStrength"></div>
+            </div>
+            <div>
+              <label>Жаростойкость</label>
+              <select id="selHeat"></select>
+              <div class="status" id="stHeat"></div>
+            </div>
+            <div>
+              <label>Сырьё</label>
+              <select id="selLeaf"></select>
+              <div class="status" id="stLeaf"></div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn" id="btnCheck">Проверить</button>
+            <button class="btn secondary" id="btnNext">Следующий →</button>
+
+            <div class="stats">
+              <div class="chip"><b id="okCount">0</b> · Правильно</div>
+              <div class="chip"><b id="badCount">0</b> · Ошибок</div>
+              <div class="chip"><b id="streak">0</b> · Серия</div>
+            </div>
+          </div>
+</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ---- Embedded data (no Excel, no fetch) ----
+  const TABAKI_DATA = [{"group": "Чайные смеси", "name": "CHABA", "strength": "FREE", "hardness": "Легкая", "heat": "Низкая", "leaf": "Те Гуань Инь", "desc": "Chabacco отличается продолжительностью курения и насыщенностью вкуса, одновременно являясь идеальной базой для миксологии.\nДля создания Chabacco мы используем только высококачественные ингредиенты из Европы, США и России.\nХорошо восстанавливается после перегрева.\nChabacco не содержит консервантов, красителей, кислот и вредных добавок.\nПри этом, в продукте соблюден баланс компонентов для дымности, яркости вкуса и комфорта вашего курения."}, {"group": "Чайные смеси", "name": "Chabacco", "strength": "2", "hardness": "Легкая", "heat": "Низкая", "leaf": "Те Гуань Инь", "desc": "Chabacco отличается продолжительностью курения и насыщенностью вкуса, одновременно являясь идеальной базой для миксологии.\nДля создания Chabacco мы используем только высококачественные ингредиенты из Европы, США и России.\nХорошо восстанавливается после перегрева.\nChabacco не содержит консервантов, красителей, кислот и вредных добавок.\nПри этом, в продукте соблюден баланс компонентов для дымности, яркости вкуса и комфорта вашего курения."}, {"group": "Чайные смеси", "name": "Brusko Medium", "strength": "2", "hardness": "Легкая", "heat": "Низкая", "leaf": "Каркаде", "desc": "BRUSKO – кальянная смесь, изготовленная на основе суданской розы.\nДоступно два варианта крепости – Medium и Strong.\nПродукт отличается отменной дымностью и жаростойкостью, сбалансированными вкусом и крепостью.\nКальянная смесь BRUSKO отлично сочетается как с табаками, так и с чайными смесями."}, {"group": "Чайные смеси", "name": "HOOK", "strength": "5", "hardness": "Комфортная", "heat": "Низкая", "leaf": "Те Гуань Инь", "desc": "Продукт HOOK это дополнительный бренд от CHABACCO.\nГод выпуска 2023 год.\nHOOK чайная смесь на классическом сырье от CHABACCO.\nНовая технология NEXUS - позволяет насыщать организм никотином с первой затяжки, по сути содержание никотина в HOOK аналогично классической CHABACCO медиум.\nГлавное отличие в усваивание никотина, а не в его количестве.\nМягко, но крепко."}, {"group": "Чайные смеси", "name": "DUFT INTRO", "strength": "FREE", "hardness": "Легкая", "heat": "Низкая", "leaf": "Orange Pekoe", "desc": "Безникотиновая чайная смесь от DUFT."}, {"group": "Чайные смеси", "name": "LETEAM", "strength": "2", "hardness": "Легкая", "heat": "Низкая", "leaf": "Те Гуань Инь", "desc": "Leteam — коллаборация DARKSIDE и Chabacco.\nКоманды флейвористов и технологов двух сильнейших брендов объединили свои навыки, экспертизу и многолетний опыт, чтобы сделать действительно хороший продукт."}, {"group": "Чайные смеси", "name": "Brusko BIT", "strength": "2", "hardness": "Легкая", "heat": "Низкая", "leaf": "Каркаде", "desc": "Доступен один вариант крепости (Strong) .\nВ линейке BRUSKO BIT упор был сделан на нестандартные вкусовые сочетания.\nСмесь фасуется в дип-пот по 20 грамм, что обеспечивает максимальное удобство в работе с BRUSKO BIT при забивке.\nКальянная смесь BRUSKO BIT отлично сочетается как с табаками, так и с чайными смесями."}, {"group": "Чайные смеси", "name": "JAM", "strength": "2", "hardness": "Легкая", "heat": "Низкая", "leaf": "Каркаде", "desc": "Яркий и простой внешний вид, с интересными готовыми и соло вкуса.\nМаксимально естественная передача вкуса.\nХорошо миксуется и долго держит вкус.\nОпределенно Масс-Маркет продукт."}, {"group": "Чайные смеси", "name": "IZZI BRO", "strength": "2", "hardness": "Легкая", "heat": "Низкая", "leaf": "Orange Pekoe", "desc": "Продукт на чайной основе от SEBERO.\nПреобладают готовые миксу и позиционируется, как легкий продукт в работе и в забивке.\nГотовый микс - неприхотливый к забивке.\nХорошо сочетается с любыми смесями.\nБазируется на европейских ароматизаторах."}, {"group": "Чайные смеси", "name": "CHABACCO STRONG", "strength": "5", "hardness": "Терпимая", "heat": "Низкая", "leaf": "Те Гуань Инь", "desc": "Chabacco отличается продолжительностью курения и насыщенностью вкуса, одновременно являясь идеальной базой для миксологии.\nДля создания Chabacco мы используем только высококачественные ингредиенты из Европы, США и России.\nХорошо восстанавливается после перегрева.\nChabacco не содержит консервантов, красителей, кислот и вредных добавок.\nПри этом, в продукте соблюден баланс компонентов для дымности, яркости вкуса и комфорта вашего курения.\nОтлично сочетается в миксе с табачными листами."}, {"group": "Крепость 2-4", "name": "Starline", "strength": "2", "hardness": "Легкая", "heat": "Низкая", "leaf": "Gold Virginia", "desc": "Продукт STARLINE является ребрендингом DAILY HOOKAH выпущенным в 2017 году, сам же STARLINE начал свой путь с 2019 года.\nРебрендинг был связан с выходом компании на европейский рынок, по законодательству которого слова HOOKAH не может быть использовано в название.\nПроизводитель Россия.\nSTARLINE является брендом компании DARKSIDE и производится на их мощностях.\nПростые и качественные моно вкусы удобно разбитые по цветовой айдентике.\nУникальные упаковки, как в розницу так и в хореку.\nВакуумная обработка листа с холодной варкой позволяет долго, качественно и ярко транслировать вкус на всем протяжении покура, перед забивкой обязательно перемешать смесь."}, {"group": "Крепость 2-4", "name": "Burn", "strength": "2", "hardness": "Легкая", "heat": "Средняя", "leaf": "Gold Virginia", "desc": "Легкая версия большого брата - BlackBurn.\nБлагодаря табачному листу впитывает в себя гораздо больше сиропа и натуральных ароматизаторов, увеличивая не только уровень вкусопередачи, но и продолжительность сеанса курения.\nБонусом идет отсутствие ярко выраженного табачного привкуса."}, {"group": "Крепость 2-4", "name": "Element Воздух", "strength": "2", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia", "desc": "Легка линейка ELEMENT с уникальными вкусами."}, {"group": "Крепость 2-4", "name": "Bliss", "strength": "2", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia", "desc": "Новинка 2024 года от бренда НАШ. Закрывает потребность легкого сегмента, как суббренд."}, {"group": "Крепость 2-4", "name": "Endorphin", "strength": "2", "hardness": "Легкая", "heat": "Низкая", "leaf": "Gold Virginia", "desc": "Дочерний бренд компании MustHave.\nРассчитанный на легкий сегмент популярных моно вкусов."}, {"group": "Крепость 2-4", "name": "Сарма Легкая", "strength": "3", "hardness": "Легкая", "heat": "Низкая", "leaf": "Virginia", "desc": "Старт продаж САРМА 360 легкой линейки - 2023 год.\nТабак родом из Иркутска.\nСтоит отметить, что бренд САРМА стартовал на рынок в далеких 2015-2018 годах, но дроп увы не нашел своего клиента. Ребрендинг в классический вид САРМА который мы видим с вами на полках произошел в 2020 году.\nСАРМА 360 легкая линейка - Отличный выбор для любителя мягкого и нежного курения. Раскроем тему почему легкая и крепкая линейка имеют наименование 360:\nРазделение классической САРМА на дополнительные две линейки с использованием единого сырья с правильной подготовкой."}, {"group": "Крепость 2-4", "name": "Spectrum cl,ml,kl", "strength": "3", "hardness": "Легкая", "heat": "Низкая", "leaf": "Burley", "desc": "Продукт родом из Санкт-Петербурга.\nНа рынке с 2015 года.\nИдея продукта проста и многогранна, то же самое позиционирование мы можем увидеть и в логотипе компании - многогранность, выбор и смелые решения.\nSPECTRUM реализует не реализуемое, пласт меню данного продукта позволяет использовать SPECTRUM в самой смелой миксологии.\nCLASSIC имеет лимитированные вкусы."}, {"group": "Крепость 2-4", "name": "Banger", "strength": "3", "hardness": "Легкая", "heat": "Средняя", "leaf": "Burley", "desc": "Совместный продукт Burn и Тимати.\nПредставлен в 2021 году.\nМасс Маркет продукт с интересными готовыми миксами и яркими соло вкусами.\nДостаточно неприхотливый к забивкам и хорошо работает в миксах.\nХорошо подойдет любителям вкусного и легкого дыма, а так же и опытным курильщикам для миксологии и создания вкусовой базы."}, {"group": "Крепость 2-4", "name": "Take", "strength": "4", "hardness": "Легкая", "heat": "Высокая", "leaf": "Virginia Burley", "desc": "Продукт от компании Chabacco. Выпущен в 2025 году. Чуть ниже среднего с яркой и понятной аромкой, отлично подойдет под легкое насыщенное курение.\nПрощает перегревы и не опытность за счет сырья."}, {"group": "Крепость 2-4", "name": "Muassel Medium", "strength": "4", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia", "desc": "MUASSEL производится с 2019 года. Свои корни берет из Перми.\nНазвание MUASSEL имеет арабские корни, и в переводе на русский язык означает «Медовый». Словом «Муассель» называется влажная табачная смесь для кальяна, пропитанная медовым сиропом и ароматическими ингредиентами."}, {"group": "Крепость 2-4", "name": "Ready", "strength": "4", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia Burley Cigar", "desc": "READY — 2021 год создания в Москве.\nREADY позиционирует себя, как быстрый/готовый к употреблению — готовые и разнообразные миксы.\nПокрывает множество потребностей, как популярных (ягодные, тропические, цитрусовые), так и менее популярные (алкогольные, десертные, травянистые) вкусы.\nПродукт является под брендом BONCHE."}, {"group": "Крепость 2-4", "name": "Sebero Classic,Arctic", "strength": "4", "hardness": "Легкая", "heat": "Средняя", "leaf": "Burley", "desc": "SEBERO родом из Омска.\nБренд начал свое существование в 2016 году, но только в 2019 представил CLASSIC линейку. ARCTIC MIX начал свой путь в 2020 году.\nФилософия бренда - это ритуал, гармония с людьми, гармония с собой, гармония с окружающим миром.\nCLASSIC линейка обладает большим меню моно вкусов.\nХорошо и неприхотливо забивается на любые виды чаш.\nARCTIC линейка базируется, как готовые, смелые и не стандартные миксы - готовый соло микс."}, {"group": "Крепость 2-4", "name": "Element Вода", "strength": "4", "hardness": "Легкая", "heat": "Высокая", "leaf": "Burley", "desc": "Первая вышедшая линейка комфортной крепости.\nИменно с неё многие начали знакомство с табаком ELEMENT в 2018 году.\nФлагманская линейка."}, {"group": "Крепость 2-4", "name": "Jent cl,alc,her", "strength": "4", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia Burley Cigar", "desc": "Jent Использует в своей ароматике натуральные экстракты заменяя классические ароматизаторы в составе.\nИменно натуральные ароматизаторы формируют вкусовой букет, объемную передачу аромата и честное раскрытие вкусопередачи.\nОсобая технология подготовки табачного сырья дает возможность сохранения природной крепости без потери"}, {"group": "Крепость 2-4", "name": "DUFT SOLO", "strength": "4", "hardness": "Комфортная", "heat": "Низкая", "leaf": "Burley Cigar", "desc": "Флагманская линейка DUFT с внушительной палитрой вкусов, не плохой жаростойкостью и средней крепостью."}, {"group": "Крепость 2-4", "name": "DUFT HATTERS", "strength": "4", "hardness": "Комфортная", "heat": "Низкая", "leaf": "Burley Cigar", "desc": "Линейка ароматов алкогольных коктейлей, созданная в коллаборации с популярной джипси-фолк-рок группой THE HATTERS на базе флагманской смеси."}, {"group": "Крепость 2-4", "name": "Энтузиаст", "strength": "2", "hardness": "Легкая", "heat": "Средняя", "leaf": "Gold Virginia", "desc": "Энтузиаст предлагает качественный табак первой цены и стирает барьеры для входа в кальянную индустрию! Хорош для дебютного знакомства с кальяном за счет низкой крепости и простых ароматов, понятных каждому."}, {"group": "Крепость 2-4", "name": "Daily Hookah", "strength": "2", "hardness": "Легкая", "heat": "Низкая", "leaf": "Gold Virginia", "desc": "Продукт от компании DARKSIDE, выведенный из производство. Данный продукт заменил STARLINE."}, {"group": "Крепость 2-4", "name": "Brusko Tobacco", "strength": "4", "hardness": "Легкая", "heat": "Средняя", "leaf": "Burley", "desc": "Табачная линейка представлена сбалансированными ароматами: это фруктово-ягодные миксы, десерты и классические моновкусы.\nУпор сделан на разработку привычной ароматики и её улучшения, а также на сбалансированную крепость табачной смеси.\nУниверсальность табака подойдет для забивок любого формата «в касание» и «не в касание».\nК тому же, в работе табак оптимально сочетается с любыми типами чаш."}, {"group": "Крепость 2-4", "name": "Smoke Angels", "strength": "4", "hardness": "Легкая", "heat": "Низкая", "leaf": "Burley", "desc": "Табак из России.\nПроизведен известным блогером John Calliano в сотрудничестве и на мощностях с компанией Darkside.\nВпервые он был представлен в 2019 году.\nНаименование берет начало с несбывшийся мечты - запустить англоязычный блог под наименованием - SMOKE ANGELS.\nДанный ресурс рассчитывался на американскую аудиторию, можно увидеть игру слов SMOKE ANGELS - LOS ANGELES.\nПозиционирование и айдентика рассчитана и пропитана американской мечтой и ассоциацией.\nБренд не обладает качествами масс маркет, идея создать качественный, натуральный и не попсовый продукт - не такой, как все."}, {"group": "Крепость 5-6", "name": "Хулиган", "strength": "5", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia Burley Cigar", "desc": "ХУЛИГАН классической линейки вышел на рынок в 2021-м году.\nПродукт родом из Краснодара.\nПродукт от профи индустрии - Саши Нуахуле.\nИмеет смелый дизайн, базируется на популярных и интересных готовых миксах. Неприхотлив к забивке и занимает нишу крепости - ниже среднего. Достойный продукт с готовыми миксами."}, {"group": "Крепость 5-6", "name": "DarkSide Shot", "strength": "5", "hardness": "Легкая", "heat": "Низкая", "leaf": "Burley", "desc": "Миксовая линейка DARKSIDE.\nКоллекция готовых сочетаний на основе лучших ароматизаторов, с которыми когда-либо работали флейвористы DARKSIDE."}, {"group": "Крепость 5-6", "name": "Сарма", "strength": "5", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia Burley", "desc": "Старт продаж САРМА классической линейки - 2020 год.\nТабак родом из Иркутска.\nСтоит отметить, что бренд САРМА стартовал на рынок в далеких 2015-2018 годах, но дроп увы не нашел своего клиента. Ребрендинг в классический вид САРМА который мы видим с вами на полках произошел в 2020 году.\nФлагманская линейка САРМА средней крепости. Вкусы, наполняющие теплыми воспоминаниями из детства с Сибирской романтикой."}, {"group": "Крепость 5-6", "name": "Crown Sapphire", "strength": "5", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia Burley", "desc": "CROWN SAPPHIRE начал свой путь в 2022 году, как табачная смесь для кальян.\nРодом из Москвы.\nCROWN более известен по углю для кальяна, не удивительно, что такой большой бренд вступил и в табачную игру и сделал это при поддержке крупного блогера в кальянной медиасреде - ТРЕХА, который занял позицию флейвориста и дал уверенный старт всему продукту.\nОпределенно масс-маркет с не стандартными и самостоятельными вкусами, в добавок обладающий средней крепостью для большого круга аудитории."}, {"group": "Крепость 5-6", "name": "Dogma", "strength": "5", "hardness": "Легкая", "heat": "Средняя", "leaf": "Cigar", "desc": "Догма - контркультура сигарной индустрии, направленная на  популяризирование сигарного листа.\nЭто продукт без флера элитарности и пафоса.\nЧестный, открытый, по-детскому наивный и яркий.\nОбладает средней крепостью и подойдет, как дял профи, так и для новичка.\n100% сигарный лист самый доступный в своем дивизионе."}, {"group": "Крепость 5-6", "name": "Palitra", "strength": "5", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia Burley", "desc": "Продукт с нестандартной и запоминающейся упаковкой - PALITRA.\nОбладает не большим, но уникальным меню вкусов, по своих характеристикам очень напоминает золотой стандарт кальянного табака.\nЯркий, мягкий, интересный и в меру крепкий."}, {"group": "Крепость 5-6", "name": "Северный", "strength": "5", "hardness": "Комфортная", "heat": "Низкая", "leaf": "Burley", "desc": "Северный один из первых Российских продуктов.\nНачал свой путь с 2017 года и на этом пути подвергся не одному ребрендингу. Продукт постоянно удерживает целевую аудиторию."}, {"group": "Крепость 5-6", "name": "Morpheus", "strength": "5", "hardness": "Легкая", "heat": "Средняя", "leaf": "Burley Oriental", "desc": "Табак MORPHEUS хорошо подходит как для курения в соло, так и для создания миксов.\nДостаточно крупная нарезка листа и небольшой объем свободного сиропа делают курение чашки более стабильным и приятным. Все ароматы могут стать как основой для микса, так и акцентом в вашей композиции."}, {"group": "Крепость 5-6", "name": "JOY", "strength": "5", "hardness": "Легкая", "heat": "Средняя", "leaf": "Burley", "desc": "Новинка 2024 года.\nОригинальный и качественный табак JOY от Alpha Hookah, производиться на мощностях BlackBurn, преимущественно имеет среднюю крепость. Это позволяет использовать его как в чистом виде, так и в сочетании с лёгкими или, наоборот, крепкими сортами."}, {"group": "Крепость 5-6", "name": "MustHave", "strength": "5", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Burley", "desc": "Идея стать золотым стандартом табака зародилась с самого основания компании и затронула вопрос крепости сырья.\nОптимальная средняя крепость, которая подходит большинству людей, была выверена и впервые использовалась именно в производстве табака MUSTHAVE.\nВпервые табак начал выпускаться в удобной пластиковой банке в форме шайбы, которая не протекает, сохраняет герметичность и удобна в работе.\nВслед за MUSTHAVE другие производители начали выпускать продукцию в аналогичном формате.\nМы пошли дальше и построили собственный завод по производству упаковки и продолжаем модернизировать банку, делая ее еще удобнее в использовании.\nОгромная матрица вкусов закрывающая большинство потребностей - настоящий Масс-Маркет ."}, {"group": "Крепость 5-6", "name": "Naш White", "strength": "5", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Virginia Burley", "desc": "WHITE линейка NАШ была представлена в 2020 году.\nПродукт родом из Москвы.\nСлоган максимально прозрачен и прост - крепкий, но мягкий.\nОпределенно при правильной забивке данный продукт удивит никотиновым насыщением и отсутствием давления на горло.\nNАШ требователен к грамотной работе с жаром, забивать данный продукт в касание - будет ошибкой.\nОгромное количество коллабораций, обширная матрица уникальный и классических вкусов, удобная упаковка с сферо-видным дном."}, {"group": "Крепость 5-6", "name": "Naш Cigar", "strength": "6", "hardness": "Легкая", "heat": "Средняя", "leaf": "Cigar", "desc": "Нет инфы"}, {"group": "Крепость 5-6", "name": "BlackBurn", "strength": "6", "hardness": "Легкая", "heat": "Средняя", "leaf": "Burley", "desc": "Фаворит компании Burn - BlackBurn.\nОдин из самых продаваемых и востребованных продуктов на рынке.\nПредставлены, как и готовые миксы, так и достойные соло вкусы.\nВ наличии также имеется разработанный в США натуральный кукурузный сироп, отвечающий за повышенную жаростойкость и выгодно выделяющий BlackBurn среди аналогов.\nБренд выделяется наличием SHOCK линейки для любителей поистине кислых вкусов, за что не однократно брал премию табака года."}, {"group": "Крепость 5-6", "name": "DarkSide Core", "strength": "6", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia Burley", "desc": "Классическая линейка DARKSIDE.\nФлагманская линейка крепости с самой широкой палитрой, которая расширит горизонты у продвинутых любителей кальяна и зайдет тем, кто недавно познакомился с культурой."}, {"group": "Крепость 5-6", "name": "DarkSide Exp", "strength": "6", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia Burley", "desc": "Линейка DARKSIDE XPERIENCE это продолжение династии готовых миксов, но уже с крепостью среднего сегмента на базу DARKSIDE CORE."}, {"group": "Крепость 5-6", "name": "Хулиган Hard", "strength": "6", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Virginia Burley Cigar", "desc": "ХУЛИГАН классической линейки вышел на рынок в 2022-м году.\nПродукт родом из Краснодара.\nПродукт от профи индустрии - Саши Нуахуле.\nИмеет смелый дизайн, базируется на популярных и интересных готовых миксах. Неприхотлив к забивке и занимает нишу крепости - выше среднего. Достойный продукт с готовыми миксами.\nДублирует вкусы классической линейки."}, {"group": "Крепость 5-6", "name": "Muassel Strong", "strength": "6", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Burley Cigar", "desc": "MUASSEL производится с 2019 года. Свои корни берет из Перми.\nНазвание MUASSEL имеет арабские корни, и в переводе на русский язык означает «Медовый». Словом «Муассель» называется влажная табачная смесь для кальяна, пропитанная медовым сиропом и ароматическими ингредиентами."}, {"group": "Крепость 5-6", "name": "Spectrum HARD", "strength": "6", "hardness": "Комфортная", "heat": "Низкая", "leaf": "Burley", "desc": "Продукт родом из Санкт-Петербурга.\nНа рынке с 2015 года.\nОтличается табачным блендом от CLASSIC LINE, тем самым имеет более высокую крепость.\nИдея продукта проста и многогранна, то же самое позиционирование мы можем увидеть и в логотипе компании - многогранность, выбор и смелые решения.\nSPECTRUM реализует не реализуемое, пласт меню данного продукта позволяет использовать SPECTRUM в самой смелой миксологии.\nHARD имеет лимитированные вкусы."}, {"group": "Крепость 5-6", "name": "Kvist", "strength": "5", "hardness": "Легкая", "heat": "Средняя", "leaf": "Burley", "desc": "KVIST родом из Кирова.\nНачал свой путь с 2016 года.\nМного ребрендингов, переработок сырья, дизайна и идеи привели продукт KVIST именно в тот продукт который представляли в самом начале.\nСкрупулезный подход к мелочам, позволяет потребителям открывать для себя новые грани вкуса, создавать интересные миксы в заведении или дома.\nТабак универсальный, применим ко всем типам чаш.\nКомфортное курение без лишних усилий - идеология бренда."}, {"group": "Крепость 5-6", "name": "MattPear MIX", "strength": "5", "hardness": "Легкая", "heat": "Средняя", "leaf": "Virginia Burley Oriental", "desc": "Продукт производится на мощностях DARKSIDE.\nБольшой кальянный бренд начавший свой путь с производства премиальных кальянов, хорошо зарекомендовавших себя на рынке.\nНасыщенный натуральный вкус и баланс крепости при мягком курении.\nДелится на 3 линейки:\nOld School – это линейка миксов, вдохновленная ностальгией по ушедшим временам зарождения кальянной культуры России.\nCrazy – линейка миксов, которая воплотила самые сумасшедшие наши идеи в жизнь.\nPOP – третья линейка миксов, вдохновленная самыми популярными вкусовыми сочетаниями."}, {"group": "Крепость 5-6", "name": "Lilu", "strength": "5", "hardness": "Легкая", "heat": "Средняя", "leaf": "Burley", "desc": "Нет инфы"}, {"group": "Крепость 5-6", "name": "Urban Soul", "strength": "5", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Burley", "desc": "Нет инфы"}, {"group": "Крепость 5-6", "name": "Peter Ralf", "strength": "5", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Virginia Burley", "desc": "Продукт от BlackBurn. На данный момент не производится и выведен из оборота."}, {"group": "Крепость 5-6", "name": "FAKE", "strength": "6", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Virginia Burley Oriental Cigar", "desc": "Производится на мощностях SEBERO.\nПродукт от компании Hookah Time.\nЯркий, не стандартный и экспериментальный.\nОбладает качествами масс маркет продукта."}, {"group": "Крепость 5-6", "name": "Tangiers Birquq", "strength": "6", "hardness": "Комфортная", "heat": "Низкая", "leaf": "Разная", "desc": "Продукт официального дистрибьютора в РФ, известный, как TANGIERS. Но из-за невозможности регистрации товарного знака наименование идет по наименованию линеек. В данном случае BIRQUQ."}, {"group": "Крепость 7-8", "name": "Overdose", "strength": "7", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Burley", "desc": "OVERDOSE является продуктом компании BURN.\nРассчитан на аудиторию крепкого курения, так же является самым крепким продуктом после Black Burn в продуктах компании BURN."}, {"group": "Крепость 7-8", "name": "Satyr Aroma", "strength": "7", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Burley Oriental", "desc": "SATYR родом из Санкт-Петербурга.\nAROMA LINE начала свой путь с 2016 года.\nНужно понимать, что SATYR это бренд хранящий традиции и идущий путем не Мас Маркета, с данным продуктом нужно трепетно работать и учиться забивать т.е. SATYR прихотлив к забивке и контролю жара, хоть и может выдержать высокую температуру, но увы не каждый курильщик сможет протянут SATYR полными легкими на максимально-доступном жаре.\nИдея AROMA LINE, это гармоничный баланс табачного бленда и натуральных ароматизаторов не перебивающих табачный вкус самого сырья."}, {"group": "Крепость 7-8", "name": "Bonche", "strength": "7", "hardness": "Комфортная", "heat": "Низкая", "leaf": "Cigar", "desc": "Всё, что создаёт команда Bonche — сделано с трепетом, в тщательных поисках изюминки, того, что будет ново и необычно.\nМаксимальной передаче сбалансированного вкуса сигарного листа.\nМягкое, плотное и обволакивающее курение.\nМаксимально возможная в кальянном табаке передача вкуса, которая приближает аромат к органическому употреблению натурального продукта.\nПредставлено две линейки:\nBonche - Классика.\nBonche Notes - Вкусы для миксов."}, {"group": "Крепость 7-8", "name": "Jent Cigar", "strength": "7", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Cigar", "desc": "Новинка 2024 года.\nЭлегантный, благородный, многослойный и уникальный. Удержание вкуса и крепости на всей длине покура. Яркие и долгоиграющие ароматы, с насыщенным послевкусием."}, {"group": "Крепость 7-8", "name": "Trofimoffs Burley", "strength": "7", "hardness": "Комфортная", "heat": "Средняя", "leaf": "—", "desc": "Нет инфы"}, {"group": "Крепость 7-8", "name": "Element Земля", "strength": "7", "hardness": "Комфортная", "heat": "Высокая", "leaf": "Burley", "desc": "Вторая по счёту линейка ELEMENT.\nСоздана исходя из запросов как кальянных мастеров, так и покупателей, которым надоело курить лёгкие и средние по крепости табаки."}, {"group": "Крепость 7-8", "name": "Сарма Крепкая", "strength": "7", "hardness": "Комфортная", "heat": "Низкая", "leaf": "Burley", "desc": "Старт продаж САРМА 360 крепкой линейки - 2021 год.\nТабак родом из Иркутска.\nСтоит отметить, что бренд САРМА стартовал на рынок в далеких 2015-2018 годах, но дроп увы не нашел своего клиента. Ребрендинг в классический вид САРМА который мы видим с вами на полках произошел в 2020 году.\nСАРМА 360 крепкая линейка - Отличный выбор для любителя курения выше среднего. Помимо моно вкусов имеет смелые готовые миксы. Раскроем тему почему легкая и крепкая линейка имеют наименование 360:\nРазделение классической САРМА на дополнительные две линейки с использованием единого сырья с правильной подготовкой."}, {"group": "Крепость 7-8", "name": "DEUS", "strength": "7", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Burley", "desc": "Продукт был представлен в 2022 году.\nПо-настоящем олдскульный стиль курения, умеренно высокая крепость исключительно из некупажированного Берли, яркие, но не приторные вкусы, максимально удобная для работы нарезка табака.\nИдеальное сочетание крепости и яркости вкуса при курении.\nНестандартные и классические ароматы, уникальное ощущение никотинового насыщения и комфортный уровень ароматизатора – все это делает DEUS идеальным табаком для работы в заведении и домашнего курения для любителей сегмента выше среднего."}, {"group": "Крепость 7-8", "name": "Deus Parfume", "strength": "7", "hardness": "Легкая", "heat": "Средняя", "leaf": "Cigar", "desc": "Выпущен на рынок в 2024 году.\nDEUS PERFUME – это абсолютно новый опыт курения.\nПарфюмированный кальянный табак с ароматами, вдохновленными легендарными композициями из мира парфюмерии.\nБаза из благородного сигарного листа в сочетании с по-настоящему утонченной ароматической работой технолога-парфюмера позволяет добиться роскоши в вашем кальяне."}, {"group": "Крепость 7-8", "name": "Rangers", "strength": "7", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Virginia Burley Cigar", "desc": "Продукт родом из Нижнего Новгорода. Дата выхода на рынок 2023 год.\nОрганический продукт созданный по старым традициям. Окунает в ностальгию по ранним продуктам индустрии."}, {"group": "Крепость 7-8", "name": "Северный Professional", "strength": "7", "hardness": "Комфортная", "heat": "Средняя", "leaf": "Burley", "desc": "Родом из Екатеринбурга, вышел на рынок в 2023 году.\nФилософия данной линейки строится на слогане:\nПрофессионалами для профессионалов.\nЧто оправдывает данную риторику, достойный продукт крепкого дивизиона с отличными показателями."}, {"group": "Крепость 7-8", "name": "Naш Black", "strength": "8", "hardness": "Терпимая", "heat": "Низкая", "leaf": "Virginia Burley", "desc": "BLACK линейка NАШ была представлена в 2023 году и сразу закрыла потребность более крепкого дивизиона.\nNАШ родом из Москвы.\nВ отличии от классической линейке в крепкой линейке используется Burley с высоким содержанием никотина. Аналогично и классической линейке крепкий наш может порадовать легкой жесткостью, но только при правильном температурным режимом. Отлично подходит, как для соло крепкого курения, так и для миксов с более легкими табаками."}, {"group": "Крепость 7-8", "name": "Sebero Black", "strength": "8", "hardness": "Терпимая", "heat": "Низкая", "leaf": "Virginia Burley Cigar", "desc": "SEBERO родом из Омска.\nBLACK начал свой путь в 2022 году.\nSEBERO долгое время занимало нишу табака ниже среднего по крепости, но рынок не стоит на месте и правила диктует потребность аудитории, так и появился SEBERO BLACK.\nПродукт для клиентов желающих натуральной и высокой крепости."}, {"group": "Крепость 7-8", "name": "DUFT Strong", "strength": "7", "hardness": "Терпимая", "heat": "Низкая", "leaf": "Cigar", "desc": "Самая крепка линейка DUFT выполненная на основе сигарного листа, фишка продукта - сбалансированный вкус ароматики и сырья."}, {"group": "Крепость 7-8", "name": "DarkSide Rare", "strength": "7", "hardness": "Комфортная", "heat": "Высокая", "leaf": "Virginia Burley Oriental", "desc": "Крепкая линейка DARKSIDE - дублирует популярные вкусы классической линейки.\nЛинейка высокой крепости для тех, кто уже давно тесно связал свой отдых с кальяном."}, {"group": "Крепость 7-8", "name": "MattPear Classic", "strength": "8", "hardness": "Комфортная", "heat": "Высокая", "leaf": "Virginia Burley Oriental", "desc": "Продукт производится на мощностях DARKSIDE.\nБольшой кальянный бренд начавший свой путь с производства премиальных кальянов, хорошо зарекомендовавших себя на рынке.\nНасыщенный натуральный вкус и баланс крепости при мягком курении.\nЯвляется классической линейкой."}, {"group": "Крепость 7-8", "name": "Tangiers Noir", "strength": "8", "hardness": "Комфортная", "heat": "Средняя", "leaf": "—", "desc": "Нет инфы"}, {"group": "Крепость 9-10", "name": "Trofimoffs No Aroma", "strength": "9", "hardness": "Разная", "heat": "Низкая", "leaf": "—", "desc": "Нет инфы"}, {"group": "Крепость 9-10", "name": "Trofimoffs Terror", "strength": "10", "hardness": "Терпимая", "heat": "Низкая", "leaf": "—", "desc": "Нет инфы"}, {"group": "Крепость 9-10", "name": "Satyr Hookah Cigar", "strength": "Разная", "hardness": "Разная", "heat": "Высокая", "leaf": "Cigar", "desc": "SATYR родом из Санкт-Петербурга.\nHOOKAH CIGAR - начала свой путь с 2019 года.\nУникальный продукт не имеющий аналогов.\nВ создании данного продукта SATYR используют сигары TOTAL FLAME.\nНа производстве компании SATYR сигары проходят процесс соусирования, что дает нам возможность ощутить полноценную вкусо-ароматику этих сигар в формате курения через кальян.\nДанный продукт дает возможность покурить сигары полной грудью.\nРазъяснение:\nSATYR HOOKAH CIGAR - это полноценные сигары прошедшие соусирование, способ приготовления чаши достаточно уникальный, потребитель самостоятельно нарывает листы сигары в чашу, а далее происходит классическая магия курения кальяна."}, {"group": "Крепость 9-10", "name": "Satyr Brilliant Collection", "strength": "Разная", "hardness": "Разная", "heat": "Средняя", "leaf": "Cigar", "desc": "SATYR родом из Санкт-Петербурга.\nBRILLIANT COLLECTION - начала свой путь с 2018 года.\nПродукт коллаборации компаний Satyr и Total Flame,\nизготовленный исключительно из сигарных табаков.\nОсновная идея заключается в предоставлении возможности познакомится со вкусо-ароматикой сигарного листа при помощи кальяна.\nСигарные табаки высоко ценятся среди курильщиков по всему миру, но для нашей аудитории потребителей и работников бывает сложно донести зачем этот популярный табак нужен в кальяне.\nБлагодаря многовековой культивации, терруару, ферментации, ручной обработке этот табак имеет богатый аромат, который может кардинально изменить представление курильщика о неароматических чашках и предоставляя это в своих заведениях вы получите уникальный инструмент привлечения новой аудитории."}, {"group": "Крепость 9-10", "name": "Satyr Old School", "strength": "Разная", "hardness": "Разная", "heat": "Средняя", "leaf": "Virginia Burley Oriental Kentucky Samsun Basma", "desc": "SATYR родом из Санкт-Петербурга.\nOLD SCHOOL начала свой путь с 2014 года.\nСтоит выделить, что именно SATYR был первым брендом на рынке кто начал делать неароматический кальянный табак.\nВ двух словах:\nЧто такое <<без аромка>>?\nТабачный бленд вымачивается, вываривается, томится и т.д. в сырье с каким вкусом планируется создать смесь, ароматизаторы не используются в создание <<без аромки>>, проще говоря для ароматики используется физический компонент: виски, цветы, сиропы или самостоятельная аромагия табачного сырья.\nИдея SATYR максимально проста - самые потрясающие вкусы создает сама природа, а именно вкус табачного листа с добавлением уже привычных и интересных нот с послевкусием."}, {"group": "Крепость 9-10", "name": "Satyr Platinum Collection", "strength": "Разная", "hardness": "Разная", "heat": "Средняя", "leaf": "Индивидуальный бленд", "desc": "SATYR родом из Санкт-Петербурга.\nPLATINUM COLLECTION - начала свой путь с 2018 года.\nОсновная отличительная особенность заключается в дополнительной горячей ферментации в алкоголе.\nЭто позволяет не только глубже раскрыть ароматику табачного бленда, который индивидуально подбирается для каждого вкуса линейки, но и передать ароматику самого алкоголя.\nБольшую ценность все вкусы раскрывают при курении в соло.\nПоскольку так раскрывается все богатство тонких оттенков вкуса.\nИменно в этом и заключается основная идея создания этой линейки.\nПознакомится с элитными сортами алкоголя при помощи кальяна, окунуться в мир глубокой ароматики, минуя спиртуозность, которая большинству потребителей закрывает этот мир.\nКаждый вкус выпускается в ограниченном количестве и имеет тубусную упаковку с стилизованным мундштуком. Это позволяет выделить этот продукт на полках магазинов и может служить идеальным подарком для истинного фаната вкуса."}, {"group": "Крепость 9-10", "name": "Tangiers Burley", "strength": "9", "hardness": "Комфортная", "heat": "Средняя", "leaf": "—", "desc": "Нет инфы"}, {"group": "Крепость 9-10", "name": "Tangiers F-Line", "strength": "10", "hardness": "Комфортная", "heat": "Средняя", "leaf": "—", "desc": "Нет инфы"}, {"group": "Крепость 9-10", "name": "DEUS Cigar", "strength": "Разная", "hardness": "Разная", "heat": "Разная", "leaf": "Cigar", "desc": "Линейка CIGAR произведена чтоб сломать сложившуюся парадигму, что сигарные продукты в кальяне предназначены для профессионалов индустрии и продвинутых любителей.\nКак правило, продукты на сигарном сырье обладают высокой крепостью, жесткостью и ценой, что отпугивает новичков от этой ниши кальянных продуктов.\n﻿DEUS CIGAR – это благородное курение сигарного листа, доступное всем."}];
+  const IMG_MAP = {"Banger": "Banger.jpg", "BlackBurn": "BlackBurn.jpeg", "Bliss": "Bliss.png", "Bonche": "Bonche.jpg", "Brusko BIT": "Brusko BIT.jpg", "Brusko Medium": "Brusko Medium.jpg", "Brusko Tobacco": "Brusko Tobacco.jpg", "Burn": "Burn.png", "CHABA": "CHABA.jpg", "CHABACCO STRONG": "CHABACCO STRONG.jpg", "Chabacco": "Chabacco.jpg", "Crown Sapphire": "Crown Sapphire.jpg", "Daily Hookah": "Daily Hookah.jpg", "DarkSide Core": "DarkSide Core.jpg", "DarkSide Exp": "DarkSide Exp.png", "DarkSide Rare": "DarkSide Rare.jpeg", "DarkSide Shot": "DarkSide Shot.png", "DEUS Cigar": "DEUS Cigar.jpg", "Deus Parfume": "Deus Parfume.webp", "DEUS": "DEUS.jpg", "Dogma": "Dogma.jpg", "DUFT HATTERS": "DUFT HATTERS.jpg", "DUFT INTRO": "DUFT INTRO.jpg", "DUFT SOLO": "DUFT SOLO.jpg", "DUFT Strong": "DUFT Strong.jpg", "Element Вода": "Element Вода.jpg", "Element Воздух": "Element Воздух.jpg", "Element Земля": "Element Земля.png", "Endorphin": "Endorphin.jpg", "FAKE": "FAKE.jpeg", "HOOK": "HOOK.jpg", "IZZI BRO": "IZZI BRO.jpg", "JAM": "JAM.jpg", "Jent Cigar": "Jent Cigar.jpg", "Jent cl,alc,her": "Jent cl,alc,her.jpg", "JOY": "JOY.jpg", "Kvist": "Kvist.jpg", "LETEAM": "LETEAM.jpg", "Lilu": "Lilu.jpg", "MattPear Classic": "MattPear Classic.png", "MattPear MIX": "MattPear MIX.jpg", "Morpheus": "Morpheus.jpg", "Muassel Medium": "Muassel Medium.jpg", "Muassel Strong": "Muassel Strong.webp", "MustHave": "MustHave.jpg", "Naш Black": "Naш Black.png", "Naш Cigar": "Naш Cigar.webp", "Naш White": "Naш White.png", "Overdose": "Overdose.jpg", "Palitra": "Palitra.jpg", "Peter Ralf": "Peter Ralf.jpg", "Rangers": "Rangers.jpg", "README": "README.txt", "Ready": "Ready.jpg", "Satyr Aroma": "Satyr Aroma.jpg", "Satyr Brilliant Collection": "Satyr Brilliant Collection.png", "Satyr Hookah Cigar": "Satyr Hookah Cigar.png", "Satyr Old School": "Satyr Old School.jpg", "Satyr Platinum Collection": "Satyr Platinum Collection.png", "Sebero Black": "Sebero Black.jpg", "Sebero Classic,Arctic": "Sebero Classic,Arctic.jpeg", "Smoke Angels": "Smoke Angels.webp", "Spectrum cl,ml,kl": "Spectrum cl,ml,kl.jpg", "Spectrum HARD": "Spectrum HARD.jpg", "Starline": "Starline.jpg", "Take": "Take.webp", "Tangiers Birquq": "Tangiers Birquq.jpeg", "Tangiers Burley": "Tangiers Burley.jpg", "Tangiers F-Line": "Tangiers F-Line.jpg", "Tangiers Noir": "Tangiers Noir.png", "Trofimoffs Burley": "Trofimoffs Burley.png", "Trofimoffs No Aroma": "Trofimoffs No Aroma.jpeg", "Trofimoffs Terror": "Trofimoffs Terror.jpg", "Urban Soul": "Urban Soul.jpg", "Сарма Крепкая": "Сарма Крепкая.jpg", "Сарма Легкая": "Сарма Легкая.jpg", "Сарма": "Сарма.jpg", "Северный Professional": "Северный Professional.webp", "Северный": "Северный.png", "Хулиган Hard": "Хулиган Hard.jpg", "Хулиган": "Хулиган.jpg", "Энтузиаст": "Энтузиаст.jpg"};
+
+  // ---- Utils ----
+  const HEAT_ORDER = ["Низкая","Средняя","Высокая","Разная"];
+
+  function uniq(arr){
+    return Array.from(new Set(arr.filter(v=>v && v!==undefined))).map(v=>String(v).trim()).filter(v=>v);
+  }
+
+  function strengthKey(v){
+    const s=String(v).trim();
+    if (/^\d+$/.test(s)) return [0, parseInt(s,10)];
+    if (s.toUpperCase()==="FREE") return [1, 0];
+    if (s==="Разная") return [2, 0];
+    if (s==="—" || s==="-" ) return [3, 0];
+    return [4, s.toLowerCase()];
+  }
+
+  function sortStrength(vals){
+    return vals.slice().sort((a,b)=>{
+      const ka=strengthKey(a), kb=strengthKey(b);
+      if (ka[0]!==kb[0]) return ka[0]-kb[0];
+      if (ka[0]===0) return ka[1]-kb[1];
+      if (ka[0]===4) return ka[1].localeCompare(kb[1], 'ru');
+      return ka[1]-kb[1];
+    });
+  }
+
+  function sortByOrder(vals, order){
+    const map=new Map(order.map((v,i)=>[v,i]));
+    return vals.slice().sort((a,b)=>{
+      const ia=map.has(a)?map.get(a):999;
+      const ib=map.has(b)?map.get(b):999;
+      if (ia!==ib) return ia-ib;
+      return String(a).localeCompare(String(b),'ru');
+    });
+  }
+
+  function sortLeaf(vals){
+    return vals.slice().sort((a,b)=>{
+      if (a==="—") return 1;
+      if (b==="—") return -1;
+      return String(a).localeCompare(String(b),'ru');
+    });
+  }
+
+  function fillSelect(selectEl, values){
+    selectEl.innerHTML="";
+    const opt0=document.createElement("option");
+    opt0.value="";
+    opt0.textContent="— выбери —";
+    selectEl.appendChild(opt0);
+    for(const v of values){
+      const o=document.createElement("option");
+      o.value=v;
+      o.textContent=v;
+      selectEl.appendChild(o);
+    }
+  }
+
+  function setStatus(el, ok){
+    el.innerHTML = `<span class="${ok?'ok':'bad'}">${ok?'✔ Верно':'✖ Неверно'}</span>`;
+  }
+
+  function escapeHtml(s){
+    return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  // ---- State ----
+
+  function markSelect(sel, ok){
+    sel.classList.remove("is-ok","is-bad");
+    sel.classList.add(ok ? "is-ok" : "is-bad");
+  }
+  const GROUPS = ["Чайные смеси","Крепость 2-4","Крепость 5-6","Крепость 7-8","Крепость 9-10"];
+  let pool=[];
+  let idx=0;
+  let current=null;
+  let okTotal=0, badTotal=0, streak=0;
+  let lastChecked=false;
+  let lastAllOk=false;
+
+  // ---- Elements ----
+
+  // ---- Image preloading (makes photos appear faster after первых брендов) ----
+  const __preloadSet = new Set();
+  function __preloadSrc(src){
+    if(!src || __preloadSet.has(src)) return;
+    __preloadSet.add(src);
+    const im = new Image();
+    try{ im.decoding = 'async'; }catch(e){}
+    try{ im.loading = 'eager'; }catch(e){}
+    im.src = src;
+  }
+  function preloadNext(n=7){
+    if(!pool || pool.length===0) return;
+    for(let i=1;i<=n;i++){
+      const it = pool[(idx+i) % pool.length];
+      if(!it) continue;
+      const fname = IMG_MAP[it.name];
+      if(!fname) continue;
+      const src = `img/${encodeURIComponent(fname)}`.replaceAll('%2F','/');
+      __preloadSrc(src);
+    }
+  }
+
+  const groupsRow=document.getElementById("groupsRow");
+  const errBox=document.getElementById("errBox");
+
+  const brandName=document.getElementById("brandName");
+  const brandImg=document.getElementById("brandImg");
+  const imgFrame=document.getElementById("imgFrame");
+
+  const tooltip=document.getElementById("tooltip");
+  const tipText=document.getElementById("tipText");
+  const tipTitle=document.getElementById("tipTitle");
+
+  const posCounter=document.getElementById("posCounter");
+const selStrength=document.getElementById("selStrength");
+const selHeat=document.getElementById("selHeat");
+  const selLeaf=document.getElementById("selLeaf");
+
+  const stStrength=document.getElementById("stStrength");
+const stHeat=document.getElementById("stHeat");
+  const stLeaf=document.getElementById("stLeaf");
+
+  const btnCheck=document.getElementById("btnCheck");
+  const btnNext=document.getElementById("btnNext");
+
+  const okCount=document.getElementById("okCount");
+  const badCount=document.getElementById("badCount");
+  const streakEl=document.getElementById("streak");
+
+  // ---- Init selects ----
+  function initSelects(){
+    const strengths = sortStrength(uniq(TABAKI_DATA.map(x=>x.strength)));
+const heat      = sortByOrder(uniq(TABAKI_DATA.map(x=>x.heat)), HEAT_ORDER);
+    const leaf      = sortLeaf(uniq(TABAKI_DATA.map(x=>x.leaf)));
+
+    fillSelect(selStrength, strengths);
+fillSelect(selHeat, heat);
+    fillSelect(selLeaf, leaf);
+  }
+
+  // ---- Groups UI ----
+  function makePill(id, text, checked=true){
+    const lab=document.createElement("label");
+    lab.className="pill";
+    const inp=document.createElement("input");
+    inp.type="checkbox";
+    inp.id=id;
+    inp.checked=checked;
+    const span=document.createElement("span");
+    span.textContent=text;
+    lab.appendChild(inp);
+    lab.appendChild(span);
+    return {lab, inp};
+  }
+
+  const groupInputs=new Map();
+
+  function initGroups(){
+    groupsRow.innerHTML = '<div style="color:var(--muted);font-size:13px;margin-right:4px;">Группы:</div>';
+
+    const all = makePill("g_all","Все", true);
+    groupsRow.appendChild(all.lab);
+
+    for(const g of GROUPS){
+      const pill=makePill("g_"+g, g, true);
+      groupsRow.appendChild(pill.lab);
+      groupInputs.set(g, pill.inp);
+      pill.inp.addEventListener("change", ()=> {
+        syncAllCheckbox();
+        rebuildPool(true);
+      });
+    }
+
+    all.inp.addEventListener("change", ()=> {
+      const val=all.inp.checked;
+      for(const g of GROUPS) groupInputs.get(g).checked=val;
+      rebuildPool(true);
+    });
+  }
+
+  function syncAllCheckbox(){
+    const allBox=document.getElementById("g_all");
+    const every = GROUPS.every(g=>groupInputs.get(g).checked);
+    allBox.checked = every;
+  }
+
+  function selectedGroups(){
+    return GROUPS.filter(g=>groupInputs.get(g).checked);
+  }
+
+  // ---- Pool / Random ----
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function rebuildPool(resetCounters=false){
+    const sel = selectedGroups();
+    pool = TABAKI_DATA.filter(x=>sel.includes(x.group));
+    shuffle(pool);
+    idx=0;
+    if(resetCounters){
+      // do not reset global stats; only reset position display
+    }
+    btnNext.disabled = (pool.length===0);
+    lastChecked=false; lastAllOk=false;
+    renderCurrent();
+  }
+
+  function renderCurrent(){
+    try{ __closeTip && __closeTip(); }catch(e){ tooltip.classList.remove('show');
+    document.body.classList.remove('tip-open'); }
+
+    // clear statuses
+    stStrength.textContent="";
+stHeat.textContent="";
+    stLeaf.textContent="";
+    btnNext.disabled = (pool.length===0);
+    lastChecked=false; lastAllOk=false;
+
+    selStrength.classList.remove("is-ok","is-bad");
+selHeat.classList.remove("is-ok","is-bad");
+    selLeaf.classList.remove("is-ok","is-bad");
+
+    if(pool.length===0){
+      current=null;
+      brandName.textContent="—";
+      imgFrame.classList.add("is-fallback");
+      brandImg.removeAttribute("src");
+      tipText.textContent="";
+      posCounter.textContent="0 / 0";
+      return;
+    }
+
+    current = pool[idx];
+    brandName.textContent = current.name;
+    posCounter.textContent = `${idx+1} / ${pool.length}`;
+
+    // reset selects
+    selStrength.value="";
+selHeat.value="";
+    selLeaf.value="";
+
+    // image
+    const fname = IMG_MAP[current.name];
+    imgFrame.classList.remove("is-fallback");
+    brandImg.onerror = ()=> {
+      imgFrame.classList.add("is-fallback");
+      brandImg.removeAttribute("src");
+    };
+    const _src = fname ? `img/${encodeURIComponent(fname)}`.replaceAll('%2F','/') : "";
+    brandImg.src = _src;
+    if(_src) __preloadSrc(_src);
+    preloadNext(9);
+
+    // Preload a few next images to make switching feel instant
+    try{
+      const toPreload = 6;
+      for(let k=1; k<=toPreload; k++){
+        const next = pool[(idx + k) % pool.length];
+        if(!next) continue;
+        const nf = IMG_MAP[next.name];
+        if(!nf) continue;
+        const im = new Image();
+        im.decoding = 'async';
+        im.loading = 'eager';
+        im.src = `img/${encodeURIComponent(nf)}`.replaceAll('%2F','/');
+      }
+    }catch(_){}
+
+
+    // tooltip text
+    tipTitle.textContent = current.name;
+    tipText.textContent = current.desc || "—";
+  }
+
+  // Tooltip show/hide
+  function showTip(){
+    if(!current) return;
+    tooltip.classList.add("show");
+  }
+  function hideTip(){
+    tooltip.classList.remove("show");
+  }
+  brandImg.addEventListener("mouseenter", showTip);
+  brandImg.addEventListener("mouseleave", hideTip);
+  tooltip.addEventListener("mouseenter", showTip);
+  tooltip.addEventListener("mouseleave", hideTip);
+
+  // Touch devices: tap to toggle description (no крестики). Second tap hides.
+  const __isTouch = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  let tipPinned = false;
+  const hintEl = document.querySelector('.hint');
+  if(__isTouch && hintEl){
+    hintEl.textContent = 'Нажми на фото, чтобы увидеть описание';
+  }
+  function __toggleTip(){
+    if(!current) return;
+    tipPinned = !tipPinned;
+    tooltip.classList.toggle('show', tipPinned);
+    document.body.classList.toggle('tip-open', tipPinned);
+  }
+  function __closeTip(){
+    tipPinned = false;
+    tooltip.classList.remove('show');
+    document.body.classList.remove('tip-open');
+  }
+  if(__isTouch){
+    imgFrame.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); __toggleTip(); });
+    tooltip.addEventListener('click', (e)=>{ e.stopPropagation(); });
+    tooltip.addEventListener('touchstart', (e)=>{ e.stopPropagation(); }, {passive:true});
+    tooltip.addEventListener('touchmove', (e)=>{ e.stopPropagation(); }, {passive:true});
+    document.addEventListener('click', __closeTip);
+    // While description is open, prevent page scroll; allow scroll inside tooltip
+    document.addEventListener('touchmove', (ev)=>{
+      if(!tipPinned) return;
+      if(tooltip.contains(ev.target)) return;
+      ev.preventDefault();
+    }, {passive:false});
+  }
+
+  // ---- Check ----
+  function normalize(v){
+    const s=(v===null||v===undefined)?"":String(v).trim();
+    return s==="" ? "—" : s;
+  }
+
+  function doCheck(){
+    if(!current) return;
+
+    const cS = normalize(current.strength);
+const cHe = normalize(current.heat);
+    const cL = normalize(current.leaf);
+
+    const uS = normalize(selStrength.value);
+const uHe = normalize(selHeat.value);
+    const uL = normalize(selLeaf.value);
+
+    const okS = (uS===cS);
+const okHe = (uHe===cHe);
+    const okL = (uL===cL);
+
+    setStatus(stStrength, okS);
+setStatus(stHeat, okHe);
+    setStatus(stLeaf, okL);
+
+    markSelect(selStrength, okS);
+markSelect(selHeat, okHe);
+    markSelect(selLeaf, okL);
+
+    const allOk = okS && okHe && okL;
+
+    lastChecked=true;
+    lastAllOk=allOk;
+
+    if(allOk){
+      okTotal++;
+      streak++;
+      btnNext.focus();
+    } else {
+      badTotal++;
+      streak=0;
+    }
+    btnNext.disabled = (pool.length===0);
+
+    okCount.textContent=okTotal;
+    badCount.textContent=badTotal;
+    streakEl.textContent=streak;
+  }
+
+  function nextBrand(){
+    if(pool.length===0) return;
+
+    // allow paging without counting as an error, but reset streak
+    if(!(lastChecked && lastAllOk)){
+      streak=0;
+      streakEl.textContent=streak;
+    }
+    lastChecked=false; lastAllOk=false;
+
+    idx = (idx+1) % pool.length;
+    renderCurrent();
+  }
+
+  btnCheck.addEventListener("click", doCheck);
+  btnNext.addEventListener("click", nextBrand);
+
+  // ---- Boot ----
+  function boot(){
+    try {
+initGroups();
+      initSelects();
+      rebuildPool(false);
+      okCount.textContent=okTotal;
+      badCount.textContent=badTotal;
+      streakEl.textContent=streak;
+    } catch (e) {
+      errBox.style.display="block";
+      errBox.innerHTML = `Ошибка JavaScript: <code>${escapeHtml(e && e.message ? e.message : String(e))}</code>. Открой F12 → Console, если нужно.`;
+      console.error(e);
+    }
+  }
+  boot();
+  </script>
+</body>
+</html>
